@@ -70,9 +70,7 @@ class Sorter:
         regions = self.getRules()
         for r in regions:
             rule = self.source[r[0]+1:r[1]]
-            # print("o (" + str(r) + ":\n" + rule)
             sortedRule = self.sortRule(rule)
-            # print("s:\n" + sortedRule)
             result = result[:r[0]+1] + sortedRule + result[r[1]:]
 
         return result
@@ -82,19 +80,23 @@ class Sorter:
         def getName(s):
             ss = s.split(":")
             name = ss[0].strip()
-            return re.sub("-o-|-moz-|-webkit-|-ms-", "", name)
+            name = re.sub("-o-|-moz-|-webkit-|-ms-", "", name)
+            name = re.sub("/\*(?s).*\*/", "", name)
+            return name.strip()
 
-        afterLast = None
         properties = {}
         props = rule.split(";")
-        for p in props:
-            n = getName(p)
-            if n is not "":
-                properties[n] = p
-            else:
-                afterLast = ";" + p
+
+        last = props[-1]
+        if getName(last) is "":
+            props[-2] = props[-2] + ";" + last
+            properties[getName(props[-2])] = props[-2]
+
+        for prop in props[:-2]:
+            properties[getName(prop)] = prop + ";"
+
         pieces = [properties[n] for n in sorted(properties)]
-        return ";".join(pieces) + (afterLast if afterLast else "")
+        return "".join(pieces)
 
     def getRules(self):
 
